@@ -16,11 +16,10 @@ class VirtualKeyboard:
     def __init__(self, webcam = 0, resolution = (800, 600)) -> None:
         self.start_time = time.time()
         self.frame_count = 0
+        self.resolution = resolution
         
         # WEBCAM CONFIG
         self.webcam = cv2.VideoCapture(webcam)
-        self.webcam.set(3, resolution[0])   # WIDTH
-        self.webcam.set(4, resolution[1])   # HEIGHT
         
         # DETECTING AND DRAWING HANDS
         self.hands = mp.solutions.hands.Hands()
@@ -29,12 +28,13 @@ class VirtualKeyboard:
     def show_webcam_with_hands(self):
         while True:
             _, frame = self.webcam.read()
+            frame = cv2.resize(frame, self.resolution)
             
             # SHOW FPS
             self.frame_count += 1
             elapsed_time = time.time() - self.start_time
             fps = str(int(self.frame_count / elapsed_time))
-            cv2.putText(frame, fps, (575, 30), cv2.FONT_HERSHEY_TRIPLEX, 
+            cv2.putText(frame, fps, (int(frame.shape[1] / 1.1), int(frame.shape[0] / 20)), cv2.FONT_HERSHEY_TRIPLEX, 
                         1, (255, 255, 0), 2)
             
             # HAND DETECTION
@@ -52,8 +52,39 @@ class VirtualKeyboard:
                         if id in (4, 8):
                             x = int(landmark.x * frame.shape[0])
                             y = int(landmark.y * frame.shape[1])
-                            # print(f"{id}: ({x}, {y})")
                             cv2.circle(frame, (x, y), 5, (255, 0, 255), cv2.FILLED)
+
+            # VIRTUAL KEYBOARD
+            top_left = [int(frame.shape[1] / 20), int(frame.shape[0] / 6)]
+            bottom_right = [int(frame.shape[1] / 9), int(frame.shape[0] / 4)]
+
+            top_row_keys = "qwertyuiop"
+
+            for key_top_row in range(11):
+                # DRAWING RECTANGLE
+                cv2.rectangle(frame, top_left, bottom_right, (255, 0, 0), 2)
+
+                # PUTTING KEY INSIDE IT
+                center_x = int((top_left[0] + bottom_right[0]) / 2)
+                center_y = int((top_left[1] + bottom_right[1]) / 2)
+
+                if key_top_row == 10:
+                    cv2.putText(
+                        frame, '<-', 
+                        (center_x - 30, center_y + 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
+                    )
+                    continue
+
+                cv2.putText(
+                    frame, top_row_keys[key_top_row], 
+                    (center_x - 10, center_y + 10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
+                )
+
+                top_left[0] += int(frame.shape[1] / 12)
+                bottom_right[0] += int(frame.shape[1] / 12)
+
 
             cv2.imshow("Webcam", frame)
 
