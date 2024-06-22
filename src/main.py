@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class VirtualKeyboard:
 
-    def __init__(self, webcam = 0, resolution = (800, 600)) -> None:
+    def __init__(self, webcam = 0, resolution = (1280, 720)) -> None:
         self.start_time = time.time()
         self.frame_count = 0
         self.resolution = resolution
@@ -24,7 +24,12 @@ class VirtualKeyboard:
         # DETECTING AND DRAWING HANDS
         self.hands = mp.solutions.hands.Hands()
         self.hands_drawing_util = mp.solutions.drawing_utils
-        
+
+        # KEYBOARD
+        self.top_row_keys = "qwertyuiop"
+        self.middle_row_keys = "asdfghjkl"
+        self.second_middle_row_keys = "zxcvbnm,."
+
     def show_webcam_with_hands(self):
         while True:
             _, frame = self.webcam.read()
@@ -35,7 +40,7 @@ class VirtualKeyboard:
             elapsed_time = time.time() - self.start_time
             fps = str(int(self.frame_count / elapsed_time))
             cv2.putText(frame, fps, (int(frame.shape[1] / 1.1), int(frame.shape[0] / 20)), cv2.FONT_HERSHEY_TRIPLEX, 
-                        1, (255, 255, 0), 2)
+                        1, (0, 255, 255), 2)
             
             # HAND DETECTION
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -54,37 +59,72 @@ class VirtualKeyboard:
                             y = int(landmark.y * frame.shape[1])
                             cv2.circle(frame, (x, y), 5, (255, 0, 255), cv2.FILLED)
 
-            # VIRTUAL KEYBOARD
+            # VIRTUAL KEYBOARD (1ST ROW)
             top_left = [int(frame.shape[1] / 20), int(frame.shape[0] / 6)]
             bottom_right = [int(frame.shape[1] / 9), int(frame.shape[0] / 4)]
 
-            top_row_keys = "qwertyuiop"
-
             for key_top_row in range(11):
-                # DRAWING RECTANGLE
-                cv2.rectangle(frame, top_left, bottom_right, (255, 0, 0), 2)
-
-                # PUTTING KEY INSIDE IT
-                center_x = int((top_left[0] + bottom_right[0]) / 2)
-                center_y = int((top_left[1] + bottom_right[1]) / 2)
-
                 if key_top_row == 10:
-                    cv2.putText(
-                        frame, '<-', 
-                        (center_x - 30, center_y + 10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
-                    )
+                    bottom_right[0] += int(bottom_right[0] / 25)
+                    self.draw_key(frame, top_left, bottom_right, 
+                              '<-')
                     continue
 
-                cv2.putText(
-                    frame, top_row_keys[key_top_row], 
-                    (center_x - 10, center_y + 10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
-                )
+                self.draw_key(frame, top_left, bottom_right, 
+                              self.top_row_keys[key_top_row])
 
                 top_left[0] += int(frame.shape[1] / 12)
                 bottom_right[0] += int(frame.shape[1] / 12)
 
+            # 2ND ROW
+            top_left = [int(frame.shape[1] / 20), int(frame.shape[0] / 6)]
+            bottom_right = [int(frame.shape[1] / 9), int(frame.shape[0] / 4)]
+            top_left[1] += int(frame.shape[0] / 8)
+            bottom_right[1] += int(frame.shape[0] / 8)
+
+            for key_middle_row in range(10):
+                if key_middle_row==9:
+                    bottom_right[0] += int(bottom_right[0] / 7)
+                    self.draw_key(frame, top_left, bottom_right, 
+                              'return')
+                    continue
+
+                self.draw_key(frame, top_left, bottom_right, 
+                              self.middle_row_keys[key_middle_row])
+
+                top_left[0] += int(frame.shape[1] / 12)
+                bottom_right[0] += int(frame.shape[1] / 12)
+            
+            # 3RD ROW
+            top_left = [int(frame.shape[1] / 20), int(frame.shape[0] / 6)]
+            bottom_right = [int(frame.shape[1] / 9), int(frame.shape[0] / 4)]
+            top_left[1] += 2 * int(frame.shape[0] / 8)
+            bottom_right[1] += 2 * int(frame.shape[0] / 8)
+
+            for key_second_middle_row in range(10):
+                if key_second_middle_row == 9:
+                    bottom_right[0] += int(bottom_right[0] / 7)
+                    self.draw_key(frame, top_left, bottom_right, 
+                              'shift')
+                    continue
+
+                self.draw_key(frame, top_left, bottom_right, 
+                              self.second_middle_row_keys[key_second_middle_row])
+
+                top_left[0] += int(frame.shape[1] / 12)
+                bottom_right[0] += int(frame.shape[1] / 12)
+
+            # LAST ROW
+            top_left = [int(frame.shape[1] / 20), int(frame.shape[0] / 6)]
+            bottom_right = [int(frame.shape[1] / 9), int(frame.shape[0] / 4)]
+            top_left[1] += 3 * int(frame.shape[0] / 8)
+            bottom_right[1] += 3 * int(frame.shape[0] / 8)
+
+            bottom_right[0] += int(frame.shape[1] / 1.5)
+            self.draw_key(frame, top_left, bottom_right, "spacebar")
+            top_left[0] = bottom_right[0] + int(frame.shape[1] / 50)
+            bottom_right[0] += int(frame.shape[1] / 5)
+            self.draw_key(frame, top_left, bottom_right, "123")
 
             cv2.imshow("Webcam", frame)
 
@@ -94,6 +134,20 @@ class VirtualKeyboard:
         self.webcam.release()
         cv2.destroyAllWindows()
 
+    def draw_key(self, frame, top_left, bottom_right, key):
+        # DRAWING RECTANGLE
+        cv2.rectangle(frame, top_left, bottom_right, (255, 0, 0), 2)
+
+        # PUTTING KEY INSIDE IT
+        center_x = int((top_left[0] + bottom_right[0]) / 2)
+        center_y = int((top_left[1] + bottom_right[1]) / 2)
+
+        cv2.putText(
+            frame, key, 
+            (center_x - 10, center_y + 10), 
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
+        )
+
     def start_process(self):
         try:
             logger.info("Starting virtual keyboard")
@@ -101,6 +155,8 @@ class VirtualKeyboard:
             self.show_webcam_with_hands()
             logger.info(f"Process finished with execution time of {time.time() - start} seconds")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             logger.error(str(e))
 
 
