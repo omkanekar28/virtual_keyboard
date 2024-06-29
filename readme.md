@@ -10,11 +10,11 @@ Installation:
   4) cd src
   5) python main.py
 
-Advantages: 
+Capabilites: 
   1) Eliminates the need for physical keyboard
   2) Enhanced user experience
   3) Secure input
 
-Disadvantages:
+Drawbacks:
   1) No support for input of numbers or special characters
   2) Not as accurate as can be
