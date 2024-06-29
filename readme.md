@@ -1,4 +1,4 @@
-Virtual Keyboard
+## <u>Virtual Keyboard</u>
 
 This project provides the user with a virtual keyboard which they can use to enter text (only alphabets) by using of their webcam and performing hand gestures. 
 
